@@ -150,22 +150,30 @@ final class ITunesAPIService {
         var artists: [Artist] = []
 
         for item in response.results {
-            if let entity = mapResult(item) {
-                if let t = entity as? Track { tracks.append(t) }
-                else if let al = entity as? Album { albums.append(al) }
-                else if let ar = entity as? Artist { artists.append(ar) }
+            switch mapResult(item) {
+            case .track(let t):  tracks.append(t)
+            case .album(let al): albums.append(al)
+            case .artist(let ar): artists.append(ar)
+            case nil: break
             }
         }
         return SearchResult(tracks: tracks, albums: albums, artists: artists, query: query)
     }
 
-    private func mapResult(_ item: ITunesResult) -> AnyObject? {
+    private enum MappedResult {
+        case track(Track), album(Album), artist(Artist)
+    }
+
+    private func mapResult(_ item: ITunesResult) -> MappedResult? {
         switch item.wrapperType {
-        case "track":   return mapTrackResult(item)
-        case "collection": return mapAlbumResult(item)
-        case "artist":  return mapArtistResult(item)
+        case "track":
+            return mapTrackResult(item).map { .track($0) }
+        case "collection":
+            return mapAlbumResult(item).map { .album($0) }
+        case "artist":
+            return mapArtistResult(item).map { .artist($0) }
         default:
-            if item.kind == "song" { return mapTrackResult(item) }
+            if item.kind == "song" { return mapTrackResult(item).map { .track($0) } }
             return nil
         }
     }

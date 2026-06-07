@@ -76,10 +76,9 @@ final class GoogleSignInService {
         let displayName = profile?.name ?? NSLocalizedString("default_user_name", comment: "")
         let email = profile?.email
         let avatarURL = profile?.imageURL(withDimension: 200)
-        if let token = googleUser.accessToken.tokenString {
-            keychainService.saveGoogleToken(token)
-        }
-        if let refresh = googleUser.refreshToken?.tokenString {
+        let tokenString = googleUser.accessToken.tokenString
+        keychainService.saveGoogleToken(tokenString)
+        if let refresh = googleUser.refreshToken.tokenString as String? {
             keychainService.saveGoogleRefresh(refresh)
         }
         keychainService.saveUserID(userID)
