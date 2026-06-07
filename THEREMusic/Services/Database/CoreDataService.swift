@@ -14,7 +14,7 @@ final class PersistenceController {
             container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
         }
         container.persistentStoreDescriptions.first?.setOption(
-            NSMergeByPropertyObjectTrumpMergePolicy,
+            true as NSNumber,
             forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey
         )
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy

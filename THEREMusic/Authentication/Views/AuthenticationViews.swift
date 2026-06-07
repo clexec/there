@@ -138,7 +138,6 @@ struct AuthButtonsView: View {
             .background(Capsule().fill(ColorPalette.textPrimary))
         }
         .scaleOnPress()
-        .glassEffect(cornerRadius: UIConstants.Radius.pill)
         .disabled(viewModel.isLoading)
     }
 
@@ -199,7 +198,7 @@ struct AuthButtonsView: View {
 struct EmailEntryView: View {
     @ObservedObject var viewModel: AuthViewModel
     @State private var email: String = ""
-    @FocusState private var isFocused: Bool
+    @State private var isFocused: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -214,8 +213,7 @@ struct EmailEntryView: View {
                 AuthTextField(
                     placeholder: NSLocalizedString("email_placeholder", comment: ""),
                     text: $email,
-                    keyboardType: .emailAddress,
-                    isFocused: $isFocused
+                    keyboardType: .emailAddress
                 )
 
                 if let error = viewModel.error {
@@ -241,7 +239,7 @@ struct EmailEntryView: View {
             Spacer()
         }
         .background(ColorPalette.backgroundBlack.ignoresSafeArea())
-        .onAppear { isFocused = true }
+        .onAppear { }
     }
 }
 
@@ -250,7 +248,7 @@ struct LoginView: View {
     let email: String
     @ObservedObject var parentVM: AuthViewModel
     @StateObject private var viewModel: LoginViewModel
-    @FocusState private var isPasswordFocused: Bool
+    @State private var isPasswordFocused: Bool = false
 
     init(email: String, parentVM: AuthViewModel) {
         self.email = email
@@ -276,8 +274,7 @@ struct LoginView: View {
                     AuthSecureField(
                         placeholder: NSLocalizedString("password_placeholder", comment: ""),
                         text: $viewModel.password,
-                        isVisible: $viewModel.isPasswordVisible,
-                        isFocused: $isPasswordFocused
+                        isVisible: $viewModel.isPasswordVisible
                     )
 
                     HStack {
@@ -313,7 +310,7 @@ struct LoginView: View {
             Spacer()
         }
         .background(ColorPalette.backgroundBlack.ignoresSafeArea())
-        .onAppear { isPasswordFocused = true }
+        .onAppear { }
     }
 }
 
@@ -322,7 +319,7 @@ struct RegisterView: View {
     let email: String
     @ObservedObject var parentVM: AuthViewModel
     @StateObject private var viewModel: RegisterViewModel
-    @FocusState private var focusedField: RegisterField?
+    @State private var focusedField: RegisterField? = nil
 
     enum RegisterField { case name, password, confirm }
 
@@ -346,15 +343,13 @@ struct RegisterView: View {
                         AuthTextField(
                             placeholder: NSLocalizedString("name_placeholder", comment: ""),
                             text: $viewModel.displayName,
-                            keyboardType: .default,
-                            isFocused: Binding(get: { focusedField == .name }, set: { if $0 { focusedField = .name } })
+                            keyboardType: .default
                         )
 
                         AuthSecureField(
                             placeholder: NSLocalizedString("password_placeholder", comment: ""),
                             text: $viewModel.password,
-                            isVisible: $viewModel.isPasswordVisible,
-                            isFocused: Binding(get: { focusedField == .password }, set: { if $0 { focusedField = .password } })
+                            isVisible: $viewModel.isPasswordVisible
                         )
 
                         PasswordStrengthView(strength: viewModel.passwordStrength)
@@ -362,8 +357,7 @@ struct RegisterView: View {
                         AuthSecureField(
                             placeholder: NSLocalizedString("confirm_password_placeholder", comment: ""),
                             text: $viewModel.confirmPassword,
-                            isVisible: $viewModel.isConfirmVisible,
-                            isFocused: Binding(get: { focusedField == .confirm }, set: { if $0 { focusedField = .confirm } })
+                            isVisible: $viewModel.isConfirmVisible
                         )
 
                         if !viewModel.confirmPassword.isEmpty {
@@ -445,7 +439,6 @@ struct ForgotPasswordView: View {
                             placeholder: NSLocalizedString("email_placeholder", comment: ""),
                             text: $viewModel.email,
                             keyboardType: .emailAddress,
-                            isFocused: .constant(false)
                         )
                         if let error = viewModel.error { ErrorLabel(message: error) }
                         if let msg = viewModel.successMessage { SuccessLabel(message: msg) }
@@ -495,20 +488,17 @@ struct ResetPasswordView: View {
                             placeholder: NSLocalizedString("reset_code_placeholder", comment: ""),
                             text: $viewModel.code,
                             keyboardType: .numberPad,
-                            isFocused: .constant(false)
                         )
                         AuthSecureField(
                             placeholder: NSLocalizedString("new_password_placeholder", comment: ""),
                             text: $viewModel.newPassword,
                             isVisible: $viewModel.isPasswordVisible,
-                            isFocused: .constant(false)
                         )
                         PasswordStrengthView(strength: viewModel.passwordStrength)
                         AuthSecureField(
                             placeholder: NSLocalizedString("confirm_password_placeholder", comment: ""),
                             text: $viewModel.confirmPassword,
                             isVisible: .constant(false),
-                            isFocused: .constant(false)
                         )
                         if let error = viewModel.error   { ErrorLabel(message: error) }
                         if let msg = viewModel.successMessage { SuccessLabel(message: msg) }
@@ -591,7 +581,7 @@ struct AuthTextField: View {
     let placeholder: String
     @Binding var text: String
     var keyboardType: UIKeyboardType = .default
-    @Binding var isFocused: Bool
+    @FocusState private var focused: Bool
 
     var body: some View {
         TextField(placeholder, text: $text)
@@ -600,6 +590,7 @@ struct AuthTextField: View {
             .textInputAutocapitalization(keyboardType == .emailAddress ? .never : .words)
             .font(.system(size: UIConstants.FontSize.body))
             .foregroundStyle(ColorPalette.textPrimary)
+            .focused($focused)
             .padding(.horizontal, UIConstants.Spacing.base)
             .frame(height: 52)
             .background {
@@ -607,7 +598,7 @@ struct AuthTextField: View {
                     .fill(ColorPalette.surface2)
                     .overlay {
                         RoundedRectangle(cornerRadius: UIConstants.Radius.base)
-                            .strokeBorder(isFocused ? ColorPalette.primaryGreen : ColorPalette.glassBorder, lineWidth: 1)
+                            .strokeBorder(focused ? ColorPalette.primaryGreen : ColorPalette.glassBorder, lineWidth: 1)
                     }
             }
     }
@@ -617,7 +608,7 @@ struct AuthSecureField: View {
     let placeholder: String
     @Binding var text: String
     @Binding var isVisible: Bool
-    @Binding var isFocused: Bool
+    @FocusState private var focused: Bool
 
     var body: some View {
         HStack {
@@ -632,6 +623,7 @@ struct AuthSecureField: View {
             .foregroundStyle(ColorPalette.textPrimary)
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
+            .focused($focused)
 
             Button {
                 isVisible.toggle()
@@ -647,7 +639,7 @@ struct AuthSecureField: View {
                 .fill(ColorPalette.surface2)
                 .overlay {
                     RoundedRectangle(cornerRadius: UIConstants.Radius.base)
-                        .strokeBorder(isFocused ? ColorPalette.primaryGreen : ColorPalette.glassBorder, lineWidth: 1)
+                        .strokeBorder(focused ? ColorPalette.primaryGreen : ColorPalette.glassBorder, lineWidth: 1)
                 }
         }
     }
