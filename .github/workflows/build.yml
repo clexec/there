@@ -19,9 +19,8 @@ jobs:
         run: |
           sudo xcode-select -s /Applications/Xcode_16.app 2>/dev/null || true
           xcodebuild -version
-          xcodebuild -showsdks | grep -i iphone
 
-      - name: Install XcodeGen
+      - name: Install tools
         run: brew install xcodegen
 
       - name: Generate Xcode Project
@@ -40,54 +39,54 @@ jobs:
           xcodebuild build \
             -project THEREMusic.xcodeproj \
             -scheme THEREMusic \
-            -sdk iphonesimulator \
+            -destination "platform=iOS Simulator,OS=latest,name=iPhone 16 Pro" \
             -configuration Debug \
             -clonedSourcePackagesDirPath SourcePackages \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            ONLY_ACTIVE_ARCH=NO \
             2>&1 | tee build_sim.txt | grep -E "error:|BUILD (FAILED|SUCCEEDED)" || true
           grep -q "BUILD FAILED" build_sim.txt && { grep "error:" build_sim.txt | head -40; exit 1; } || true
 
-      - name: Build for iOS device (Release)
+      - name: Archive & Build for Device
         run: |
           set -o pipefail
-          xcodebuild build \
+          xcodebuild archive \
             -project THEREMusic.xcodeproj \
             -scheme THEREMusic \
-            -sdk iphoneos \
+            -destination "generic/platform=iOS Simulator" \
+            -archivePath "$PWD/build/THEREMusic.xcarchive" \
             -configuration Release \
             -clonedSourcePackagesDirPath SourcePackages \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            DEVELOPMENT_TEAM="" \
-            ONLY_ACTIVE_ARCH=NO \
-            CONFIGURATION_BUILD_DIR="$PWD/build_output" \
-            2>&1 | tee build_device.txt | grep -E "error:|BUILD (FAILED|SUCCEEDED)" || true
-          grep -q "BUILD FAILED" build_device.txt && { grep "error:" build_device.txt | head -40; exit 1; } || true
-          echo "Build output:"
-          find build_output -name "*.app" 2>/dev/null | head -5
+            SKIP_INSTALL=NO \
+            2>&1 | tee build_archive.txt | grep -E "error:|BUILD (FAILED|SUCCEEDED)" || true
+          grep -q "BUILD FAILED" build_archive.txt && { grep "error:" build_archive.txt | head -40; exit 1; } || true
+          echo "Archive:"
+          find build -name "*.app" 2>/dev/null | head -5
 
-      - name: Package IPA
+      - name: Package IPA from Simulator build
         run: |
-          APP=$(find build_output -name "*.app" -maxdepth 3 | head -1)
-          echo "App: $APP"
+          # Get .app from simulator build (DerivedData)
+          APP=$(find ~/Library/Developer/Xcode/DerivedData -name "THEREMusic.app" \
+            -path "*/Debug-iphonesimulator/*" 2>/dev/null | head -1)
           if [ -z "$APP" ]; then
-            APP=$(find ~/Library/Developer/Xcode/DerivedData -name "THEREMusic.app" \
-              -path "*/Release-iphoneos/*" 2>/dev/null | head -1)
-            echo "DerivedData App: $APP"
+            APP=$(find ~/Library/Developer/Xcode/DerivedData -name "THEREMusic.app" 2>/dev/null | head -1)
           fi
+          if [ -z "$APP" ]; then
+            APP=$(find build -name "*.app" 2>/dev/null | head -1)
+          fi
+          echo "Found: $APP"
           if [ -n "$APP" ] && [ -d "$APP" ]; then
             mkdir -p Payload
-            cp -r "$APP" Payload/
+            cp -r "$APP" Payload/THEREMusic.app
             zip -r THEREMusic.ipa Payload/
             echo "IPA: $(du -sh THEREMusic.ipa)"
           else
-            echo "No .app found"
-            find ~/Library/Developer/Xcode/DerivedData -name "THEREMusic.app" 2>/dev/null | head -10
+            echo "No .app found — listing DerivedData:"
+            ls ~/Library/Developer/Xcode/DerivedData/ 2>/dev/null || true
             exit 1
           fi
 
@@ -106,5 +105,5 @@ jobs:
           name: build-logs
           path: |
             build_sim.txt
-            build_device.txt
+            build_archive.txt
           if-no-files-found: warn
