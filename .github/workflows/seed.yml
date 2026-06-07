@@ -1,0 +1,53 @@
+name: Seed Music Database
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/seed_music.py'
+
+jobs:
+  seed:
+    name: Fetch music data from iTunes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run seeder
+        run: |
+          cd scripts
+          python3 seed_music.py --limit 50
+        timeout-minutes: 30
+
+      - name: Show stats
+        run: |
+          cat scripts/data/json/stats.json || true
+          echo "Tracks JSON size: $(du -sh scripts/data/json/tracks.json 2>/dev/null || echo 'N/A')"
+          echo "Previews downloaded: $(ls scripts/data/previews/*.m4a 2>/dev/null | wc -l)"
+
+      - name: Upload JSON data
+        uses: actions/upload-artifact@v4
+        with:
+          name: music-database
+          path: |
+            scripts/data/json/
+            scripts/data/theremusic.db
+          retention-days: 30
+
+      - name: Commit seed.json to repo
+        run: |
+          git config user.email "seeder@theremusic.app"
+          git config user.name "THERE Seeder"
+          mkdir -p THEREMusic/Resources/SeedData
+          cp scripts/data/json/seed.json THEREMusic/Resources/SeedData/seed.json || true
+          cp scripts/data/json/stats.json THEREMusic/Resources/SeedData/stats.json || true
+          git add THEREMusic/Resources/SeedData/ || true
+          git diff --cached --quiet || git commit -m "data: update music seed database [skip ci]"
+          git push || true
