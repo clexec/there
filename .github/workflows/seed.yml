@@ -20,11 +20,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run seeder
+      - name: Run seeder v2 (Deezer + iTunes, 150 artists)
         run: |
           cd scripts
-          python3 seed_music.py --limit 50
-        timeout-minutes: 30
+          python3 seed_music_v2.py --limit 50
+        timeout-minutes: 45
 
       - name: Show stats
         run: |
