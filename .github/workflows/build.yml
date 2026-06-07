@@ -19,6 +19,7 @@ jobs:
         run: |
           sudo xcode-select -s /Applications/Xcode_16.app 2>/dev/null || true
           xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -33,7 +34,7 @@ jobs:
             -project THEREMusic.xcodeproj \
             -clonedSourcePackagesDirPath SourcePackages
 
-      - name: Build for Simulator
+      - name: Build for Simulator (verify compile)
         run: |
           set -o pipefail
           xcodebuild build \
@@ -46,20 +47,20 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=NO \
-            2>&1 | tee build_output.txt | grep -E "error:|warning:|note:|Build (FAILED|succeeded)" || true
+            2>&1 | tee build_output.txt | grep -E "error:|Build (FAILED|succeeded)" || true
           if grep -q "BUILD FAILED" build_output.txt; then
-            echo "=== ERRORS ==="
             grep "error:" build_output.txt | head -50
             exit 1
           fi
 
-      - name: Archive (for IPA)
+      - name: Archive for iOS device (IPA)
         run: |
           set -o pipefail
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
           xcodebuild archive \
             -project THEREMusic.xcodeproj \
             -scheme THEREMusic \
-            -destination "generic/platform=iOS" \
+            -sdk iphoneos \
             -archivePath build/THEREMusic.xcarchive \
             -configuration Release \
             -clonedSourcePackagesDirPath SourcePackages \
@@ -68,55 +69,50 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
             SKIP_INSTALL=NO \
-            2>&1 | tee archive_output.txt | grep -E "error:|Build (FAILED|succeeded)" || true
+            BUILD_LIBRARY_FOR_DISTRIBUTION=NO \
+            DEVELOPMENT_TEAM="" \
+            2>&1 | tee archive_output.txt | grep -E "error:|BUILD|Archive" || true
           if grep -q "BUILD FAILED" archive_output.txt; then
-            echo "=== ARCHIVE ERRORS ==="
             grep "error:" archive_output.txt | head -50
             exit 1
           fi
+          ls -la build/ || true
 
-      - name: Export IPA (unsigned)
+      - name: Package IPA manually from .xcarchive
         run: |
-          cat > /tmp/ExportOptions.plist << 'PLIST'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>development</string>
-              <key>compileBitcode</key>
-              <false/>
-              <key>signingStyle</key>
-              <string>manual</string>
-              <key>stripSwiftSymbols</key>
-              <true/>
-          </dict>
-          </plist>
-          PLIST
-          xcodebuild -exportArchive \
-            -archivePath build/THEREMusic.xcarchive \
-            -exportPath build/IPA \
-            -exportOptionsPlist /tmp/ExportOptions.plist \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            2>&1 || echo "Export skipped — archive available as artifact"
+          mkdir -p build/IPA/Payload
+          APP_PATH=$(find build/THEREMusic.xcarchive/Products -name "*.app" | head -1)
+          echo "App path: $APP_PATH"
+          if [ -n "$APP_PATH" ]; then
+            cp -r "$APP_PATH" build/IPA/Payload/
+            cd build/IPA
+            zip -r ../THEREMusic.ipa Payload/
+            echo "IPA created successfully"
+            ls -lh ../THEREMusic.ipa
+          else
+            echo "No .app found in archive"
+            find build/THEREMusic.xcarchive -type d | head -20
+          fi
 
       - name: Package artifacts
         if: always()
         run: |
           mkdir -p artifacts
-          if [ -f build_output.txt ]; then cp build_output.txt artifacts/; fi
-          if ls build/IPA/*.ipa 2>/dev/null; then cp build/IPA/*.ipa artifacts/; fi
+          if [ -f build/THEREMusic.ipa ]; then
+            cp build/THEREMusic.ipa artifacts/
+            echo "✅ IPA ready: $(du -sh artifacts/THEREMusic.ipa)"
+          fi
           if [ -d build/THEREMusic.xcarchive ]; then
             cd build && zip -r ../artifacts/THEREMusic-archive.zip THEREMusic.xcarchive && cd ..
-            echo "Archive zipped"
+            echo "✅ Archive zipped"
           fi
+          ls -lh artifacts/ || echo "No artifacts"
 
-      - name: Upload artifacts
+      - name: Upload IPA + Archive
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: THEREMusic-build
+          name: THEREMusic-IPA
           path: artifacts/
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 14
