@@ -93,3 +93,19 @@ targets:
       base:
         ENABLE_PREVIEWS: YES
         SWIFT_EMIT_LOC_STRINGS: YES
+
+schemes:
+  THEREMusic:
+    build:
+      targets:
+        THEREMusic: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
