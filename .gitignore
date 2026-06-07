@@ -1,0 +1,64 @@
+# Xcode
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+*.xcworkspace/*
+!*.xcworkspace/contents.xcworkspacedata
+/*.gcno
+**/xcshareddata/WorkspaceSettings.xcsettings
+
+# Build
+build/
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+*.hmap
+
+# Swift Package Manager
+.build/
+SourcePackages/
+*.resolved
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Code injection
+iOSInjectionProject/
+
+# macOS
+.DS_Store
+*.swp
+.AppleDouble
+.LSOverride
+
+# Xcode user data
+xcuserdata/
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+
+# Playground
+playground.xcworkspace
+
+# SPM
+.swiftpm/
+
+# Secrets — never commit
+*.env
+Config.xcconfig
+GoogleService-Info.plist

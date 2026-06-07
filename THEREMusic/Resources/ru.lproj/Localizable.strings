@@ -1,0 +1,263 @@
+/* Russian */
+
+/* Auth */
+"auth_title" = "Миллионы треков. Бесплатно в THERE.";
+"auth_subtitle" = "Слушайте музыку со всего мира. Создавайте плейлисты, открывайте новых артистов.";
+"auth_continue_apple" = "Войти через Apple";
+"auth_continue_google" = "Войти через Google";
+"auth_sign_in_email" = "Войти по Email";
+"auth_terms_intro" = "Продолжая, вы соглашаетесь с нашими";
+"auth_enter_email" = "Введите Email";
+"auth_email_prompt" = "Укажите ваш email";
+"auth_login" = "Войти";
+"auth_welcome_back" = "С возвращением!";
+"auth_create_account" = "Создать аккаунт";
+"auth_create_account_title" = "Создайте аккаунт THERE";
+"auth_create_account_button" = "Создать аккаунт";
+"auth_login_button" = "Войти";
+"auth_email" = "Email";
+
+/* Fields */
+"email_placeholder" = "Адрес электронной почты";
+"password_placeholder" = "Пароль";
+"confirm_password_placeholder" = "Подтвердите пароль";
+"name_placeholder" = "Ваше имя";
+"reset_code_placeholder" = "Код подтверждения (6 цифр)";
+"new_password_placeholder" = "Новый пароль";
+
+/* Buttons */
+"continue" = "Продолжить";
+"cancel" = "Отмена";
+"save" = "Сохранить";
+"done" = "Готово";
+"or" = "или";
+"create" = "Создать";
+"edit" = "Редактировать";
+"delete" = "Удалить";
+"clear" = "Очистить";
+"play" = "Слушать";
+"shuffle" = "Перемешать";
+"follow" = "Подписаться";
+"following" = "Вы подписаны";
+"see_all" = "Все";
+"clear_all" = "Очистить всё";
+"play_all" = "Слушать всё";
+
+/* Password */
+"forgot_password" = "Забыли пароль?";
+"forgot_password_title" = "Сброс пароля";
+"forgot_password_subtitle" = "Введите email — мы отправим код подтверждения.";
+"send_reset_code" = "Отправить код";
+"reset_password" = "Сброс пароля";
+"reset_password_title" = "Введите код из письма";
+"reset_password_button" = "Установить новый пароль";
+"password_weak" = "Слабый";
+"password_medium" = "Средний";
+"password_strong" = "Надёжный";
+"passwords_match" = "Пароли совпадают";
+"passwords_no_match" = "Пароли не совпадают";
+"terms_agreement" = "Создавая аккаунт, вы соглашаетесь с нашими";
+"terms_of_service" = "Условиями использования";
+"privacy_policy" = "Политикой конфиденциальности";
+
+/* Info messages */
+"info_reset_code_sent" = "Код подтверждения отправлен на вашу почту";
+"info_password_reset_success" = "Пароль успешно изменён";
+
+/* Errors */
+"error_network" = "Нет подключения к интернету";
+"error_timeout" = "Время запроса истекло";
+"error_server" = "Ошибка сервера (%d)";
+"error_decoding" = "Не удалось загрузить данные";
+"error_unauthorized" = "Требуется авторизация";
+"error_not_found" = "Не найдено";
+"error_rate_limited" = "Слишком много запросов. Попробуйте позже";
+"error_permission" = "Доступ запрещён";
+"error_cache_miss" = "Контент не кэширован";
+"error_biometric" = "Биометрическая аутентификация не удалась";
+"error_invalid_email" = "Некорректный адрес электронной почты";
+"error_weak_password" = "Пароль должен содержать не менее 8 символов: заглавные, строчные буквы и цифры";
+"error_invalid_credentials" = "Неверный email или пароль";
+"error_account_not_found" = "Аккаунт с таким email не найден";
+"error_wrong_password" = "Неверный пароль";
+"error_email_exists" = "Этот email уже зарегистрирован";
+"error_fill_all_fields" = "Пожалуйста, заполните все обязательные поля";
+"error_passwords_no_match" = "Пароли не совпадают";
+"error_apple_auth" = "Ошибка входа через Apple";
+"error_no_window" = "Не удалось открыть окно входа";
+"error_invalid_registration" = "Некорректные данные регистрации";
+"error_no_audio_url" = "Аудио недоступно для этого трека";
+"error_invalid_url" = "Некорректная ссылка на аудио";
+"error_invalid_reset_code" = "Неверный или истёкший код подтверждения";
+
+/* Navigation / Tabs */
+"tab_home" = "Главная";
+"tab_search" = "Поиск";
+"tab_favorites" = "Избранное";
+"tab_create" = "Создать";
+"tab_profile" = "Профиль";
+"tab_library" = "Библиотека";
+
+/* Home sections */
+"section_recently_played" = "Недавно слушали";
+"section_discover_weekly" = "Открытия недели";
+"section_release_radar" = "Радар новинок";
+"section_daily_mix_1" = "Ежедневный микс 1";
+"section_daily_mix_2" = "Ежедневный микс 2";
+"section_top_charts" = "Топ чарты";
+"section_new_releases" = "Новинки";
+"section_recommended" = "Рекомендуется для вас";
+"section_featured_artists" = "Популярные артисты";
+"section_genres" = "Жанры";
+
+/* Greetings */
+"greeting_morning" = "Доброе утро";
+"greeting_afternoon" = "Добрый день";
+"greeting_evening" = "Добрый вечер";
+"greeting_night" = "Доброй ночи";
+
+/* Player */
+"playing_from" = "ВОСПРОИЗВОДИТСЯ";
+"queue" = "Очередь";
+"queue_next_up" = "Далее";
+"comments" = "Комментарии";
+"share" = "Поделиться";
+"devices" = "Устройства";
+"no_comments" = "Пока нет комментариев";
+"write_comment" = "Написать комментарий...";
+"edited" = "изменено";
+"repeat_off" = "Повтор выкл";
+"repeat_all" = "Повторять всё";
+"repeat_one" = "Повторять один";
+
+/* Library */
+"your_library" = "Моя библиотека";
+"liked_songs" = "Любимые треки";
+"liked" = "Любимые";
+"playlists" = "Плейлисты";
+"my_playlists" = "Мои плейлисты";
+"following" = "Подписки";
+"library_playlists" = "Плейлисты";
+"library_albums" = "Альбомы";
+"library_artists" = "Артисты";
+"library_songs" = "Треки";
+"track_count" = "%d треков";
+"no_liked_songs" = "Здесь появятся ваши любимые треки";
+"no_liked_songs_subtitle" = "Нажмите на сердечко у любого трека, чтобы сохранить его";
+
+/* Create */
+"create_playlist" = "Создать плейлист";
+"create_playlist_subtitle" = "Начните новую коллекцию треков";
+"new_playlist" = "Новый плейлист";
+"playlist_name_placeholder" = "Название плейлиста";
+"playlist_description_placeholder" = "Описание (необязательно)";
+
+/* Profile */
+"edit_profile" = "Редактировать профиль";
+"recent_activity" = "Последняя активность";
+"no_recent_activity" = "Нет последней активности";
+"history" = "История";
+"history_subtitle" = "История прослушивания";
+"downloads" = "Загрузки";
+"downloads_subtitle" = "Музыка для офлайн";
+
+/* Settings */
+"settings" = "Настройки";
+"settings_appearance" = "Внешний вид";
+"settings_playback" = "Воспроизведение";
+"settings_storage" = "Хранилище и данные";
+"settings_notifications" = "Уведомления";
+"settings_account" = "Аккаунт";
+"theme" = "Тема";
+"language" = "Язык";
+"theme_dark" = "Тёмная";
+"theme_light" = "Светлая";
+"theme_system" = "Системная";
+"stream_quality" = "Качество потока";
+"quality_low" = "Низкое (96 кбит/с)";
+"quality_normal" = "Обычное (160 кбит/с)";
+"quality_high" = "Высокое (320 кбит/с)";
+"quality_very_high" = "Очень высокое";
+"crossfade" = "Плавный переход";
+"download_wifi_only" = "Загружать только по Wi-Fi";
+"cache_size" = "Размер кэша";
+"clear_cache" = "Очистить кэш";
+"notifications" = "Push-уведомления";
+"discover_weekly_notif" = "Открытия недели";
+"release_radar_notif" = "Радар новинок";
+"about" = "О THERE Music";
+"sign_out" = "Выйти";
+
+/* Context Menu */
+"add_to_liked" = "Добавить в любимые";
+"remove_from_liked" = "Убрать из любимых";
+"add_to_queue" = "Добавить в очередь";
+"go_to_artist" = "Перейти к артисту";
+"go_to_album" = "Перейти к альбому";
+"track_details" = "Подробности трека";
+
+/* Search */
+"search_placeholder" = "Артисты, треки, подкасты";
+"search_recent" = "Последние запросы";
+"browse_categories" = "Обзор";
+"search_tracks" = "Треки";
+"search_albums" = "Альбомы";
+"search_artists" = "Артисты";
+"search_no_results" = "Ничего не найдено по запросу «%@»";
+"search_tab_all" = "Всё";
+"search_tab_tracks" = "Треки";
+"search_tab_albums" = "Альбомы";
+"search_tab_artists" = "Артисты";
+
+/* Genres */
+"genre_pop" = "Поп";
+"genre_rock" = "Рок";
+"genre_hiphop" = "Хип-хоп";
+"genre_electronic" = "Электронная";
+"genre_jazz" = "Джаз";
+"genre_classical" = "Классика";
+"genre_rnb" = "R&B";
+"genre_country" = "Кантри";
+"genre_reggae" = "Регги";
+"genre_metal" = "Метал";
+"genre_folk" = "Фолк";
+"genre_latino" = "Латино";
+"genre_soul" = "Соул";
+"genre_punk" = "Панк";
+"genre_indie" = "Инди";
+"genre_blues" = "Блюз";
+
+/* Misc */
+"unknown_artist" = "Неизвестный артист";
+"default_user_name" = "Меломан";
+"artist" = "Артист";
+"playlist" = "Плейлист";
+"albums" = "Альбомы";
+"popular" = "Популярное";
+"followers_count" = "%@ подписчиков";
+"time_years_ago" = "%d лет назад";
+"time_months_ago" = "%d мес. назад";
+"time_weeks_ago" = "%d нед. назад";
+"time_days_ago" = "%d дн. назад";
+"time_hours_ago" = "%d ч. назад";
+"time_minutes_ago" = "%d мин. назад";
+"time_just_now" = "Только что";
+
+/* Sort */
+"sort_title" = "Название";
+"sort_artist" = "Артист";
+"sort_album" = "Альбом";
+"sort_date_added" = "Дата добавления";
+"sort_duration" = "Длительность";
+"sort_play_count" = "Число прослушиваний";
+"sort_recently_played" = "Недавно прослушанные";
+"sort_alphabetical" = "По алфавиту";
+
+/* Filter */
+"filter_all" = "Все";
+"filter_playlists" = "Плейлисты";
+"filter_albums" = "Альбомы";
+"filter_artists" = "Артисты";
+"filter_podcasts" = "Подкасты";
+"filter_downloaded" = "Загруженные";
+"filter_liked" = "Любимые";
