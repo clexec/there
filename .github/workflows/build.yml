@@ -23,9 +23,6 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - name: Install xcpretty
-        run: gem install xcpretty --no-document
-
       - name: Generate Xcode Project
         run: xcodegen generate
 
@@ -36,15 +33,9 @@ jobs:
             -project THEREMusic.xcodeproj \
             -clonedSourcePackagesDirPath SourcePackages
 
-      - name: Build for Simulator (verify compile)
+      - name: Build for Simulator
         run: |
           set -o pipefail
-          SIMULATOR=$(xcodebuild -showdestinations \
-            -project THEREMusic.xcodeproj \
-            -scheme THEREMusic 2>/dev/null | \
-            grep "platform:iOS Simulator" | grep "iPhone" | head -1 | \
-            sed "s/.*{ //" | sed "s/ }//")
-          echo "Using destination: $SIMULATOR"
           xcodebuild build \
             -project THEREMusic.xcodeproj \
             -scheme THEREMusic \
@@ -55,18 +46,12 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=NO \
-            2>&1 | xcpretty --color || \
-          xcodebuild build \
-            -project THEREMusic.xcodeproj \
-            -scheme THEREMusic \
-            -destination "generic/platform=iOS Simulator" \
-            -configuration Debug \
-            -clonedSourcePackagesDirPath SourcePackages \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            ONLY_ACTIVE_ARCH=NO \
-            2>&1 | xcpretty --color
+            2>&1 | tee build_output.txt | grep -E "error:|warning:|note:|Build (FAILED|succeeded)" || true
+          if grep -q "BUILD FAILED" build_output.txt; then
+            echo "=== ERRORS ==="
+            grep "error:" build_output.txt | head -50
+            exit 1
+          fi
 
       - name: Archive (for IPA)
         run: |
@@ -83,8 +68,12 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
             SKIP_INSTALL=NO \
-            BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
-            2>&1 | xcpretty --color
+            2>&1 | tee archive_output.txt | grep -E "error:|Build (FAILED|succeeded)" || true
+          if grep -q "BUILD FAILED" archive_output.txt; then
+            echo "=== ARCHIVE ERRORS ==="
+            grep "error:" archive_output.txt | head -50
+            exit 1
+          fi
 
       - name: Export IPA (unsigned)
         run: |
@@ -110,34 +99,24 @@ jobs:
             -exportOptionsPlist /tmp/ExportOptions.plist \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            2>&1 || echo "Export skipped (requires signing cert) — archive is available"
+            2>&1 || echo "Export skipped — archive available as artifact"
 
-      - name: Package Archive as ZIP fallback
+      - name: Package artifacts
         if: always()
         run: |
-          if [ -d "build/IPA" ]; then
-            echo "IPA exported successfully"
-            ls -lh build/IPA/
-          elif [ -d "build/THEREMusic.xcarchive" ]; then
-            echo "Archive created — zipping as artifact"
-            cd build && zip -r THEREMusic-archive.zip THEREMusic.xcarchive
+          mkdir -p artifacts
+          if [ -f build_output.txt ]; then cp build_output.txt artifacts/; fi
+          if ls build/IPA/*.ipa 2>/dev/null; then cp build/IPA/*.ipa artifacts/; fi
+          if [ -d build/THEREMusic.xcarchive ]; then
+            cd build && zip -r ../artifacts/THEREMusic-archive.zip THEREMusic.xcarchive && cd ..
+            echo "Archive zipped"
           fi
 
-      - name: Upload IPA / Archive artifact
+      - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: THEREMusic-build
-          path: |
-            build/IPA/*.ipa
-            build/THEREMusic-archive.zip
+          path: artifacts/
           if-no-files-found: warn
           retention-days: 7
-
-      - name: Upload Build Log on Failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: ~/Library/Developer/Xcode/DerivedData/**/Logs/Build/*.xcactivitylog
-          if-no-files-found: warn
