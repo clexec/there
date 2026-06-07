@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build iOS App
+    name: Build & Export IPA
     runs-on: macos-15
 
     steps:
@@ -17,16 +17,14 @@ jobs:
 
       - name: Select Xcode 16
         run: |
-          sudo xcode-select -s /Applications/Xcode_16.app 2>/dev/null || \
-          sudo xcode-select -s /Applications/Xcode_16.1.app 2>/dev/null || \
-          sudo xcode-select -s /Applications/Xcode_16.2.app 2>/dev/null || \
-          echo "Using default Xcode"
+          sudo xcode-select -s /Applications/Xcode_16.app 2>/dev/null || true
           xcodebuild -version
 
-      - name: Install tools
-        run: |
-          brew install xcodegen
-          gem install xcpretty --no-document
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Install xcpretty
+        run: gem install xcpretty --no-document
 
       - name: Generate Xcode Project
         run: xcodegen generate
@@ -38,9 +36,26 @@ jobs:
             -project THEREMusic.xcodeproj \
             -clonedSourcePackagesDirPath SourcePackages
 
-      - name: Build (No Signing)
+      - name: Build for Simulator (verify compile)
         run: |
           set -o pipefail
+          SIMULATOR=$(xcodebuild -showdestinations \
+            -project THEREMusic.xcodeproj \
+            -scheme THEREMusic 2>/dev/null | \
+            grep "platform:iOS Simulator" | grep "iPhone" | head -1 | \
+            sed "s/.*{ //" | sed "s/ }//")
+          echo "Using destination: $SIMULATOR"
+          xcodebuild build \
+            -project THEREMusic.xcodeproj \
+            -scheme THEREMusic \
+            -destination "platform=iOS Simulator,name=iPhone 16" \
+            -configuration Debug \
+            -clonedSourcePackagesDirPath SourcePackages \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            ONLY_ACTIVE_ARCH=NO \
+            2>&1 | xcpretty --color || \
           xcodebuild build \
             -project THEREMusic.xcodeproj \
             -scheme THEREMusic \
@@ -51,7 +66,73 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=NO \
-            | xcpretty --color
+            2>&1 | xcpretty --color
+
+      - name: Archive (for IPA)
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project THEREMusic.xcodeproj \
+            -scheme THEREMusic \
+            -destination "generic/platform=iOS" \
+            -archivePath build/THEREMusic.xcarchive \
+            -configuration Release \
+            -clonedSourcePackagesDirPath SourcePackages \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            SKIP_INSTALL=NO \
+            BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
+            2>&1 | xcpretty --color
+
+      - name: Export IPA (unsigned)
+        run: |
+          cat > /tmp/ExportOptions.plist << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>development</string>
+              <key>compileBitcode</key>
+              <false/>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>stripSwiftSymbols</key>
+              <true/>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath build/THEREMusic.xcarchive \
+            -exportPath build/IPA \
+            -exportOptionsPlist /tmp/ExportOptions.plist \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            2>&1 || echo "Export skipped (requires signing cert) — archive is available"
+
+      - name: Package Archive as ZIP fallback
+        if: always()
+        run: |
+          if [ -d "build/IPA" ]; then
+            echo "IPA exported successfully"
+            ls -lh build/IPA/
+          elif [ -d "build/THEREMusic.xcarchive" ]; then
+            echo "Archive created — zipping as artifact"
+            cd build && zip -r THEREMusic-archive.zip THEREMusic.xcarchive
+          fi
+
+      - name: Upload IPA / Archive artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: THEREMusic-build
+          path: |
+            build/IPA/*.ipa
+            build/THEREMusic-archive.zip
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Upload Build Log on Failure
         if: failure()
