@@ -247,7 +247,7 @@ enum LibraryTab: String, CaseIterable {
 }
 
 // MARK: - HomeSection
-enum HomeSection: String, CaseIterable, Identifiable {
+enum HomeSection: String, CaseIterable, Identifiable, Codable {
     case recentlyPlayed   = "recently_played"
     case discoverWeekly   = "discover_weekly"
     case releaseRadar     = "release_radar"
