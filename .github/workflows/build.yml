@@ -20,18 +20,21 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_16.app 2>/dev/null || true
           xcodebuild -version
 
+      - name: Install iOS 18 platform support
+        run: |
+          # Download iOS device support if needed
+          xcodebuild -downloadPlatform iOS 2>/dev/null || true
+          xcrun --sdk iphoneos --show-sdk-version 2>/dev/null || echo "SDK check done"
+          xcodebuild -showsdks 2>/dev/null | grep -i iphone || true
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
       - name: Generate Xcode Project
         run: xcodegen generate
 
-      - name: Show available schemes & SDKs
-        run: |
-          echo "=== Schemes ==="
-          xcodebuild -project THEREMusic.xcodeproj -list
-          echo "=== SDKs ==="
-          xcodebuild -showsdks | grep -i iphone
+      - name: Show schemes
+        run: xcodebuild -project THEREMusic.xcodeproj -list 2>/dev/null || true
 
       - name: Resolve Swift Packages
         run: |
@@ -40,7 +43,7 @@ jobs:
             -project THEREMusic.xcodeproj \
             -clonedSourcePackagesDirPath SourcePackages
 
-      - name: Build for Simulator (verify)
+      - name: Build for Simulator (verify compile)
         run: |
           set -o pipefail
           xcodebuild build \
@@ -56,42 +59,43 @@ jobs:
             2>&1 | tee build_sim.txt | grep -E "error:|BUILD (FAILED|SUCCEEDED)" || true
           grep -q "BUILD FAILED" build_sim.txt && { grep "error:" build_sim.txt | head -30; exit 1; } || true
 
-      - name: Archive (iOS device)
+      - name: Build for iOS device (Release)
         run: |
           set -o pipefail
-          xcodebuild archive \
+          xcodebuild build \
             -project THEREMusic.xcodeproj \
             -scheme THEREMusic \
-            -sdk iphoneos \
-            -archivePath "$PWD/build/THEREMusic.xcarchive" \
+            -destination "generic/platform=iOS" \
             -configuration Release \
             -clonedSourcePackagesDirPath SourcePackages \
-            ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            PROVISIONING_PROFILE_SPECIFIER="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
             DEVELOPMENT_TEAM="" \
-            SKIP_INSTALL=NO \
-            INSTALL_PATH="/Applications" \
-            2>&1 | tee build_archive.txt | grep -E "error:|BUILD (FAILED|SUCCEEDED)|Touching" || true
-          grep -q "BUILD FAILED" build_archive.txt && { grep "error:" build_archive.txt | head -30; exit 1; } || true
-          echo "Archive contents:"
-          find build/THEREMusic.xcarchive -name "*.app" -maxdepth 6 2>/dev/null || echo "No .app found"
+            ONLY_ACTIVE_ARCH=NO \
+            BUILD_DIR="$PWD/build_release" \
+            2>&1 | tee build_device.txt | grep -E "error:|BUILD (FAILED|SUCCEEDED)|warning:" || true
+          grep -q "BUILD FAILED" build_device.txt && { grep "error:" build_device.txt | head -30; exit 1; } || true
 
-      - name: Package IPA from archive
+      - name: Package IPA from build output
         run: |
-          APP=$(find "$PWD/build/THEREMusic.xcarchive" -name "*.app" -maxdepth 6 | head -1)
-          echo "Found app: $APP"
-          mkdir -p build/Payload
+          # Find .app in build output
+          APP=$(find build_release -name "*.app" -not -path "*/Intermediates*" | head -1)
+          echo "Found: $APP"
+          if [ -z "$APP" ]; then
+            # Try DerivedData
+            APP=$(find ~/Library/Developer/Xcode/DerivedData -name "THEREMusic.app" -path "*/Release-iphoneos/*" 2>/dev/null | head -1)
+            echo "DerivedData: $APP"
+          fi
           if [ -n "$APP" ] && [ -d "$APP" ]; then
-            cp -r "$APP" build/Payload/
-            cd build
+            mkdir -p Payload
+            cp -r "$APP" Payload/
             zip -r THEREMusic.ipa Payload/
-            echo "✅ IPA size: $(du -sh THEREMusic.ipa)"
+            echo "✅ IPA created: $(du -sh THEREMusic.ipa)"
           else
-            echo "No .app bundle found — archive may have failed silently"
-            find build/ -type f | head -30
+            echo "Searching all possible locations..."
+            find /Users/runner -name "THEREMusic.app" 2>/dev/null | head -5
             exit 1
           fi
 
@@ -99,16 +103,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: THEREMusic-IPA
-          path: build/THEREMusic.ipa
+          path: THEREMusic.ipa
           if-no-files-found: error
           retention-days: 14
 
-      - name: Upload build logs on failure
+      - name: Upload logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: build-logs
           path: |
             build_sim.txt
-            build_archive.txt
+            build_device.txt
           if-no-files-found: warn
