@@ -27,9 +27,6 @@ packages:
   GoogleSignIn:
     url: https://github.com/google/GoogleSignIn-iOS
     from: "7.0.0"
-  LiquidGlassKit:
-    url: https://github.com/DnV1eX/LiquidGlassKit.git
-    from: "1.0.0"
 
 targets:
   THEREMusic:
@@ -40,8 +37,11 @@ targets:
       - path: THEREMusic
         excludes:
           - "**/.DS_Store"
+          - "Resources/**"
     resources:
       - THEREMusic/Resources
+      - path: THEREMusic/Services/Database/THEREMusic.xcdatamodeld
+        type: folder
     info:
       path: THEREMusic/Resources/Info.plist
       properties:
@@ -83,6 +83,12 @@ targets:
         product: GoogleSignIn
       - package: GoogleSignIn
         product: GoogleSignInSwift
+      - sdk: Security.framework
+      - sdk: AuthenticationServices.framework
+      - sdk: AVFoundation.framework
+      - sdk: MediaPlayer.framework
+      - sdk: CoreData.framework
+      - sdk: UserNotifications.framework
     settings:
       base:
         ENABLE_PREVIEWS: YES

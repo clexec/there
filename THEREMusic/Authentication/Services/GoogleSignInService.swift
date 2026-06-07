@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(GoogleSignIn)
 import GoogleSignIn
+#endif
 
 // MARK: - GoogleSignInService
 final class GoogleSignInService {
@@ -8,17 +10,16 @@ final class GoogleSignInService {
     private let keychainService = KeychainService.shared
     private init() {}
 
-    // MARK: - Configure
     func configure() {
-        guard let clientID = Bundle.main.object(forInfoDictionaryKey: "GIDClientID") as? String else {
-            return
-        }
+#if canImport(GoogleSignIn)
+        guard let clientID = Bundle.main.object(forInfoDictionaryKey: "GIDClientID") as? String else { return }
         GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+#endif
     }
 
-    // MARK: - Sign In
     @MainActor
     func signIn() async throws -> User {
+#if canImport(GoogleSignIn)
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let rootViewController = windowScene.windows.first?.rootViewController else {
             throw AppErrorType.authFailed(NSLocalizedString("error_no_window", comment: ""))
@@ -27,18 +28,19 @@ final class GoogleSignInService {
             let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController)
             return try mapToUser(from: result.user)
         } catch let error as GIDSignInError {
-            if error.code == .canceled {
-                throw AppErrorType.authFailed("cancelled")
-            }
+            if error.code == .canceled { throw AppErrorType.authFailed("cancelled") }
             throw AppErrorType.authFailed(error.localizedDescription)
         } catch {
             throw AppErrorType.authFailed(error.localizedDescription)
         }
+#else
+        throw AppErrorType.authFailed("Google Sign In not available")
+#endif
     }
 
-    // MARK: - Restore
     @MainActor
     func restorePreviousSignIn() async throws -> User? {
+#if canImport(GoogleSignIn)
         guard GIDSignIn.sharedInstance.hasPreviousSignIn() else { return nil }
         do {
             try await GIDSignIn.sharedInstance.restorePreviousSignIn()
@@ -47,29 +49,33 @@ final class GoogleSignInService {
         } catch {
             return nil
         }
+#else
+        return nil
+#endif
     }
 
-    // MARK: - Sign Out
     func signOut() {
+#if canImport(GoogleSignIn)
         GIDSignIn.sharedInstance.signOut()
+#endif
         keychainService.deleteGoogleTokens()
     }
 
-    // MARK: - Handle URL
     func handle(_ url: URL) -> Bool {
-        GIDSignIn.sharedInstance.handle(url)
+#if canImport(GoogleSignIn)
+        return GIDSignIn.sharedInstance.handle(url)
+#else
+        return false
+#endif
     }
 
-    // MARK: - Private
+#if canImport(GoogleSignIn)
     private func mapToUser(from googleUser: GIDGoogleUser) throws -> User {
         let profile = googleUser.profile
         let userID = googleUser.userID ?? UUID().uuidString
         let displayName = profile?.name ?? NSLocalizedString("default_user_name", comment: "")
         let email = profile?.email
-
-        var avatarURL: URL? = nil
-        if let url = profile?.imageURL(withDimension: 200) { avatarURL = url }
-
+        let avatarURL = profile?.imageURL(withDimension: 200)
         if let token = googleUser.accessToken.tokenString {
             keychainService.saveGoogleToken(token)
         }
@@ -77,7 +83,6 @@ final class GoogleSignInService {
             keychainService.saveGoogleRefresh(refresh)
         }
         keychainService.saveUserID(userID)
-
         return User(
             id: userID,
             email: email,
@@ -88,4 +93,5 @@ final class GoogleSignInService {
             lastLoginAt: Date()
         )
     }
+#endif
 }

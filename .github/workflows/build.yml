@@ -23,8 +23,10 @@ jobs:
           echo "Using default Xcode"
           xcodebuild -version
 
-      - name: Install XcodeGen
-        run: brew install xcodegen xcpretty 2>/dev/null || true
+      - name: Install tools
+        run: |
+          brew install xcodegen
+          gem install xcpretty --no-document
 
       - name: Generate Xcode Project
         run: xcodegen generate
